@@ -22,11 +22,11 @@ def main(test_mode = True):
             "Room 3": "911356_room_3@conf.hipchat.com"
         })
 
-        bot.start_shell()
+        bot.start_client()
 
     else:
 
-        bot.start_client()
+        bot.start_shell()
 
 
 if __name__ == "__main__":
