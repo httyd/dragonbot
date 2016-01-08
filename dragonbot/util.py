@@ -13,6 +13,7 @@ class Message:
         self.body = body
 
         self.admin = bot.is_admin(nick)
+        self.dev = bot.is_dev(nick)
 
 
     def reply(self, body):

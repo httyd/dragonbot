@@ -7,7 +7,10 @@ def main(test_mode = True):
     bot = DragonBot()
 
     bot.set_name("Toothless")
+
     bot.admins(["StoickTheVast"])
+    bot.devs(["Hiccup", "Astrid"])
+
     bot.skills("skills", "skills.dat")
 
     if not test_mode:

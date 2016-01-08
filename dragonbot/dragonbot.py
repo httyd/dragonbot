@@ -19,6 +19,7 @@ class DragonBot:
 
         self._name = "DragonBot"
         self._admins = {}
+        self._devs = {}
         self._skills = {}
         self._data = None
 
@@ -90,6 +91,14 @@ class DragonBot:
         self._admins = admin_list
 
 
+    def devs(self, dev_list):
+
+        """Set the list of dev users by accepting an iterable collection of
+        username nick strings for each dev user."""
+
+        self._devs = dev_list
+
+
     def skills(self, skill_directory, data_file):
 
         """Set the skills for the bot by accepting a skill directory, where the
@@ -105,6 +114,13 @@ class DragonBot:
         """Check if a user is an admin."""
 
         return user in self._admins
+
+
+    def is_dev(self, user):
+
+        """Check if a user is a dev."""
+
+        return user in self._devs
 
 
     def _receive(self, message):
