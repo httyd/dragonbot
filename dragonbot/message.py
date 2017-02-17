@@ -2,13 +2,13 @@ class Message:
 
     """Message date structure for bot and skill plugins."""
 
-    def __init__(self, bot, nick, room, time, body):
+    def __init__(self, bot, channel, nick, time, body):
 
         """Initialize a message object from Jabber message parameters."""
 
         self.bot = bot
+        self.channel = channel
         self.nick = nick
-        self.room = room
         self.time = time
         self.body = body
 
@@ -19,9 +19,28 @@ class Message:
     def reply(self, body):
 
         """Reply to a message by sending a new message containing a specified
-        string to the room of the message."""
+        string to the channel of the message."""
 
-        self.bot.send(self.room, body)
+        if self.channel == self.bot.nick():
+
+            self.bot.send(self.nick, body)
+
+        else:
+
+            self.bot.send(self.channel, body)
+
+
+    def action(self, body):
+
+        """Reply to a message by sending an action message."""
+
+        if self.channel == self.bot.nick():
+
+            self.bot.action(self.nick, body)
+
+        else:
+
+            self.bot.action(self.channel, body)
 
 
     def __repr__(self):
@@ -36,13 +55,3 @@ class Message:
         """Return the timestamp representation of the message."""
 
         return self.__repr__()
-
-
-class Room:
-
-    """Room data structure for bot and skill plugins."""
-
-    def __init__(self, name, room_id):
-
-        self.name = name
-        self.room_id = room_id

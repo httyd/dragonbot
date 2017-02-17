@@ -3,17 +3,17 @@ import re
 
 class decorator:
 
-    """Basic template decorator that has useful built-in checks for correct room
-    and admin users. Should not be used in actual skills."""
+    """Basic template decorator that has useful built-in checks for correct
+    channel and admin users. Should not be used in actual skills."""
 
     def __init__(self):
 
         pass
 
 
-    def is_room(self, room):
+    def is_channel(self, channel):
 
-        return self.room == None or self.room == room.name
+        return self.channel == None or self.channel == channel
 
 
     def is_admin(self, admin):
@@ -31,10 +31,10 @@ class command(decorator):
     """Decorator that treats the bot as a mini shell, allowing the user to
     specify a multi-word command and word-split arguments."""
 
-    def __init__(self, keyphrase, room = None, admin = None, dev = None):
+    def __init__(self, keyphrase, channel = None, admin = None, dev = None):
 
         self.keyphrase = shlex.split(keyphrase)
-        self.room = room
+        self.channel = channel
         self.admin = admin
         self.dev = dev
 
@@ -53,8 +53,8 @@ class command(decorator):
 
             bot = args.pop(0).lower()
             if args[:len(self.keyphrase)] == self.keyphrase \
-                    and bot == "@" + message.bot.name().lower() \
-                    and self.is_room(message.room) \
+                    and bot == message.bot.nick().lower() + "," \
+                    and self.is_channel(message.channel) \
                     and self.is_admin(message.admin) \
                     and self.is_dev(message.dev):
 
@@ -68,10 +68,10 @@ class match(decorator):
     """Decorator that searches for a regular expression pattern and returns to
     the user its named capturing groups as arguments to the decorated method."""
 
-    def __init__(self, regex, room = None, admin = None, dev = None):
+    def __init__(self, regex, channel = None, admin = None, dev = None):
 
         self.pattern = re.compile(regex)
-        self.room = room
+        self.channel = channel
         self.admin = admin
         self.dev = dev
 
@@ -82,7 +82,7 @@ class match(decorator):
 
             match = self.pattern.search(message.body)
 
-            if match and self.is_room(message.room) \
+            if match and self.is_channel(message.channel) \
                     and self.is_admin(message.admin) \
                     and self.is_dev(message.dev):
 

@@ -1,10 +1,10 @@
-import sleekxmpp
 import datetime
 import time
 import os
 
+from .ircclient import IRCClient
 from .skills import load_skills, save_skills, run_skills
-from .util import Message, Room
+from .message import Message
 
 class DragonBot:
 
@@ -12,12 +12,11 @@ class DragonBot:
 
         """Initialize default values for the bot."""
 
-        self._jabber_id = None
-        self._jabber_password = None
-        self._jabber_port = 5222
-        self._jabber_rooms = {}
+        self._host = None
+        self._port = None
+        self._password = None
+        self._nick = "DragonBot"
 
-        self._name = "DragonBot"
         self._admins = {}
         self._devs = {}
         self._skills = {}
@@ -26,61 +25,21 @@ class DragonBot:
         self._test_mode = False
 
 
-    def jabber_id(self, jid):
+    def setup(self, host, port = 6667, password = "", nick = "DragonBot"):
 
-        """Set the Jabber ID, including the domain."""
+        """Set the server host, port, password, and nick."""
 
-        self._jabber_id = jid
-
-
-    def jabber_password(self, password):
-
-        """Set the Jabber password."""
-
-        self._jabber_password = password
-
-    
-    def jabber_port(self, port):
-
-        """Set the Jabber port, with 5222 as default."""
-
-        self._jabber_port = port
+        self._host = host
+        self._port = port
+        self._password = password
+        self._nick = nick
 
 
-    def jabber_rooms(self, rooms):
+    def nick(self):
 
-        """Provide a dictionary of rooms with the keys being the human-readable
-        room name and the value being the Jabber address."""
+        """Get the nick."""
 
-        self._jabber_rooms = rooms
-
-
-    def jabber_room_names(self):
-
-        """Provide a list of room names."""
-
-        return self._jabber_rooms.keys()
-
-
-    def jabber_room_id(self, name):
-
-        """Provide a Jabber address for a given room name."""
-
-        return self._jabber_rooms[name]
-
-
-    def set_name(self, name):
-
-        """Set the name of the bot, which is DragonBot by default."""
-
-        self._name = name
-
-
-    def name(self):
-
-        """Receive the name of the bot."""
-
-        return self._name
+        return self._nick
 
 
     def admins(self, admin_list):
@@ -131,10 +90,10 @@ class DragonBot:
         save_skills(self, self._skills, self._data)
 
 
-    def send(self, room, text):
+    def send(self, channel, text):
 
-        """Send a message, either in test mode using the REPL or in Jabber mode
-        using the Jabber client."""
+        """Send a message, either in test mode using the REPL or in IRC mode
+        using the IRC client."""
 
         if self._test_mode:
 
@@ -142,8 +101,22 @@ class DragonBot:
 
         else:
 
-            self._client.send_message(mto = room.room_id,
-                    mbody = text, mtype = "groupchat")
+            self._client.send("PRIVMSG", channel, str(text))
+
+
+    def action(self, channel, text):
+
+        """Send a message, either in test mode using the REPL or in IRC mode
+        using the IRC client."""
+
+        if self._test_mode:
+
+            print(self.nick(), text)
+
+        else:
+
+            self._client.send("PRIVMSG", channel,
+                              "\x01ACTION "  + str(text) + "\x01")
 
     
     def start_shell(self):
@@ -152,7 +125,7 @@ class DragonBot:
 
         self._test_mode = True
         nick = input("Your Nick: ")
-        room = Room("Dragon Shell", "dragon_shell")
+        channel = "#repl"
 
         while True:
 
@@ -161,7 +134,7 @@ class DragonBot:
                 body = input("> ")
                 time = datetime.datetime.now()
 
-                message = Message(self, nick, room, time, body)
+                message = Message(self, channel, nick, time, body)
 
                 self._receive(message)
 
@@ -173,46 +146,29 @@ class DragonBot:
 
     def start_client(self):
 
-        """Start the Jabber client."""
+        """Start the IRC client."""
 
-        self._client = sleekxmpp.ClientXMPP(self._jabber_id, self._jabber_password)
-        self._client.register_plugin("xep_0045")
+        self._client = IRCClient(self._host,
+                           self._port,
+                           self._password,
+                           self._nick,
+                           self._nick,
+                           self._nick)
 
-        self._client.add_event_handler("session_start", self._client_startup)
-        self._client.add_event_handler("groupchat_message", self._client_receive)
-
-        self._client.connect()
-        self._client.process(threaded = True)
-
-
-    def _client_startup(self, event):
-
-        """Set up the Jabber client, join each room."""
-
-        self._client.get_roster()
-        self._client.send_presence()
-
-        for room in self._jabber_rooms.values():
-            self._client.plugin["xep_0045"].joinMUC(room, self.name(), wait = True)
+        self._client.handler("PRIVMSG", self._client_receive)
+        self._client.start()
 
 
-    def _client_receive(self, msg):
+    def _client_receive(self, client, line):
 
-        """Receive and parse message from the Jabber client."""
+        """Receive and parse message from the IRC client."""
 
-        time = datetime.datetime.fromtimestamp(float(msg.xml.attrib["ts"]))
-        now = datetime.datetime.now()
-        nick = msg["mucnick"]
+        nick = line.nick
+        channel = line.parameters[0]
+        time = datetime.datetime.now()
+        body = line.parameters[1]
 
-        if now - time > datetime.timedelta(seconds = 5) or nick == self._name:
-            return
-
-        room_id = msg["mucroom"]
-        room_name = list(self._jabber_rooms.keys())[list(self._jabber_rooms.values()).index(room_id)]
-        room = Room(room_name, room_id)
-        body = msg["body"]
-
-        message = Message(self, nick, room, time, body)
+        message = Message(self, channel, nick, time, body)
         self._receive(message)
 
 

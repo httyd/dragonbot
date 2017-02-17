@@ -6,24 +6,16 @@ def main(test_mode = True):
 
     bot = DragonBot()
 
-    bot.set_name("Toothless")
+    bot.setup("localhost", port = 6667,
+              password = "hunter2",
+              nick = "Toothless")
 
     bot.admins(["StoickTheVast"])
     bot.devs(["Hiccup", "Astrid"])
 
-    bot.skills("skills", "skills.dat")
+    bot.skills("skills", "skills.db")
 
     if not test_mode:
-
-        bot.jabber_id("911356_6457606@chat.hipchat.com")
-        bot.jabber_password("rgu4FzcgrDUZxtUxncGVkXMc")
-        bot.jabber_port(5222)
-
-        bot.jabber_rooms({
-            "Room 1": "911356_room_1@conf.hipchat.com",
-            "Room 2": "911356_room_2@conf.hipchat.com",
-            "Room 3": "911356_room_3@conf.hipchat.com"
-        })
 
         bot.start_client()
 
@@ -34,4 +26,4 @@ def main(test_mode = True):
 
 if __name__ == "__main__":
 
-    main(test_mode = True)
+    main(test_mode = False)
